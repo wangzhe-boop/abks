@@ -4621,6 +4621,14 @@ async function bootstrapFromCloud() {
     try { localStorage.removeItem('abks_pending_upload_v1'); } catch(e) {}
     // 拉取最新（包含刚上传的）
     await pullAll();
+    // [fix-empty-list] 兜底：若 pullAll 因二次拉取失败提前返回、talents 仍为空，
+    // 但本函数已成功拉到的 remoteTalents 有数据，则直接用它填充，避免列表空白
+    if (talents.length === 0 && remoteTalents.length > 0) {
+      console.warn('[fix-empty-list] pullAll 后 talents 仍为空，bootstrap 已拉到 ' + remoteTalents.length + ' 条，兜底填充');
+      talents = remoteTalents.filter(t => t && !localTombstones.includes(t.id));
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(talents)); } catch (e) {}
+      renderAll();
+    }
     // 启动 realtime
     startRealtime();
     showToast('云端数据已就绪（' + (remoteTalents.length + toUploadTalents.length) + ' 达人 / ' + (remoteTasks.length + toUploadTasks.length) + ' 任务）');
@@ -4729,6 +4737,14 @@ async function pullAll() {
     //      修复：用 new Date(...).getTime() 兜底，防止 ISO 字符串与 0 相减得 NaN 导致排序异常
     mergedTalents.sort((a, b) => (new Date(b.updatedAt || 0).getTime()) - (new Date(a.updatedAt || 0).getTime()));
     talents = mergedTalents;
+    // [fix-empty-list] 兜底：云端明明返回了数据，但经过 tombstone 过滤/合并后 mergedTalents 却为空，
+    // 说明本地 abks_deleted_talents 已污染（包含了全部/绝大部分活跃达人 id），
+    // 此时以云端返回的原始行作为权威来源兜底，确保列表能正常显示（不持久化空数组）
+    const _rawCloudTalents = (t1.data || []).map(r => r.data).filter(Boolean);
+    if (talents.length === 0 && _rawCloudTalents.length > 0) {
+      console.warn('[fix-empty-list] mergedTalents=0 但云端返回 ' + _rawCloudTalents.length + ' 条，疑似 abks_deleted_talents 污染，已用云端原始数据兜底显示');
+      talents = _rawCloudTalents;
+    }
     // v29: 关键诊断日志——确认 pullAll 完成后 talents 数量
     console.log('[v29 pullAll 完成] talents=' + talents.length + ', cloudTalents=' + cloudTalents.length + ', localSnapshot=' + localTalentsSnapshot.length + ', tombstones=' + tombstones.length);
     // P7(v52): 输出达人合并 diff 日志（便于排查跨端同步异常）
@@ -4821,7 +4837,13 @@ async function pullAll() {
     try { syncUpstream(UPSTREAM_SAMPLES_KEY, mergedSamples); } catch (e) {}
 
     // v21: 落盘"清理后"的数据；不调 saveTalents/saveTasks——它们会触发反向 push
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(talents));
+    // [fix-empty-list] 绝不用空数组覆盖云端有数据时的本地缓存，避免污染状态被持久化/扩散到其它端
+    const _rawCloudForWrite = (t1.data || []).map(r => r.data).filter(Boolean);
+    if (talents.length > 0 || _rawCloudForWrite.length === 0) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(talents));
+    } else {
+      console.warn('[fix-empty-list] 拒绝把空数组写入 localStorage（云端有 ' + _rawCloudForWrite.length + ' 条，避免污染扩散）');
+    }
     localStorage.setItem(TASKS_KEY, JSON.stringify(mergedTasks));
     localStorage.setItem(SAMPLES_KEY, JSON.stringify(mergedSamples));
     samplesCache = mergedSamples;
@@ -11689,6 +11711,7 @@ function renderAll() {
       }
     } catch(e) {}
   }
+  console.log('达人列表:', talents);
   renderKPI();
   renderList();
   renderDetail();
