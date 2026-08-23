@@ -1,0 +1,9 @@
+{
+  "name": "abks-workbench",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ABKS 达人寄样全链路管理工具（单文件工作台）",
+  "scripts": {
+    "build": "mkdir -p dist && cp -r ./* dist/"
+  }
+}
