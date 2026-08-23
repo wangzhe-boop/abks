@@ -4669,14 +4669,7 @@ async function pullAll() {
     if (t1 && t1.error) throw new Error('talents: ' + (t1.error.message || '拉取失败'));
     if (t2 && t2.error) throw new Error('tasks: ' + (t2.error.message || '拉取失败'));
     if (t3 && t3.error) throw new Error('settings: ' + (t3.error.message || '拉取失败'));
-    // [samples-fix] v21 原逻辑：samples 任一 error 就整体 throw，导致 tasks/talents 也跟着不落盘
-    //   —— 实测 Supabase samples 表偶发 403(permission denied) 会让整段 pullAll 失败，
-    //   本地停在上一次旧 localStorage（如 176 条），而云端 tasks 实际有 248 条 → 本地/线上不一致。
-    //   改为与 bootstrapFromCloud 一致：samples 拉取失败降级为空数组，不阻断 talents/tasks 同步。
-    if (t4 && t4.error) {
-      console.warn('[samples-fix] samples 拉取失败，降级为空数组（不阻断主流程）: ', t4.error.message);
-      t4.data = [];
-    }
+    if (t4 && t4.error) throw new Error('samples: ' + (t4.error.message || '拉取失败'));
   } catch (e) {
     // v21: 网络/接口异常——绝不动本地，原样返回
     console.warn('[v21] pullAll 拉取失败，保留本地数据', e);
