@@ -2617,11 +2617,15 @@ body {
 .btn-ai:hover { transform: translateY(-1px); box-shadow: 0 3px 6px rgba(123,97,255,0.4); }
 .btn-ai:disabled { background: #c7c7cc; cursor: not-allowed; box-shadow: none; transform: none; }
 
-/* [settings-ai] 两级识别视觉反馈：本地已填=绿 / AI 纠错补充=蓝 / 缺失=红框 */
-.ai-local-filled { border-color: #2e9e5b !important; box-shadow: 0 0 0 2px rgba(46,158,91,0.18) !important; background: #f0fbf4 !important; }
-.ai-ai-filled { border-color: #2f7bff !important; box-shadow: 0 0 0 2px rgba(47,123,255,0.20) !important; background: #f0f5ff !important; }
-.ai-missing { border-color: #d63333 !important; box-shadow: 0 0 0 2px rgba(214,51,51,0.18) !important; }
-.parse-tag.miss { background: #fde8e8; color: #d63333; border: 1px solid #f3b6b6; }
+.ai-settings { margin-top: 10px; border: 1px dashed #d9d2ff; border-radius: 8px; padding: 6px 10px; background: #faf8ff; }
+.ai-settings summary { cursor: pointer; font-size: 12px; color: #6a5cff; font-weight: 600; user-select: none; }
+.ai-settings summary:hover { color: #9b59ff; }
+.ai-key-row { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
+.ai-key-input { flex: 1; border: 1px solid #d9d2ff; border-radius: 6px; padding: 6px 10px; font-size: 12px; outline: none; }
+.ai-key-input:focus { border-color: #9b59ff; }
+.btn-ai-save { background: linear-gradient(135deg, #6a5cff 0%, #9b59ff 100%); color: #fff; border: none; border-radius: 6px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.btn-ai-save:hover { filter: brightness(1.05); }
+.ai-key-hint { margin-top: 6px; font-size: 11px; color: #9a93c7; line-height: 1.5; }
 
 .parse-result {
   display: none;
@@ -3489,7 +3493,6 @@ body {
       <button class="btn-icon active" id="tabTalentsBtn" onclick="switchMainTab('talents')">达人</button>
       <button class="btn-icon" onclick="switchView('tasks')" id="viewTasksBtn">📋 待办任务 <span id="taskBadge" class="task-badge" style="display:none;">0</span></button>
       <button class="btn-icon" onclick="openSettings()">话术</button>
-      <button class="btn-icon" id="tabSettingsBtn" onclick="openSystemSettings()" style="display:none;">⚙️ 设置</button>
       <button class="btn-icon pc-only" id="tabSamplesBtn" onclick="switchMainTab('samples')">寄样</button>
       <button class="btn-icon" onclick="exportData()">导出</button>
       <button class="btn-icon" onclick="importData()">导入</button>
@@ -3791,6 +3794,14 @@ body {
           <button class="btn-ai" id="btnAiRecognize" onclick="aiRecognizeTalent()">🤖 AI 智能识别</button>
           <button class="btn-clear-smart" onclick="clearSmart()">清空</button>
         </div>
+        <details class="ai-settings">
+          <summary>🤖 AI 设置（粘贴中转站 apiKey，仅存本机）</summary>
+          <div class="ai-key-row">
+            <input type="password" id="aiApiKeyInput" class="ai-key-input" placeholder="sk-...（粘贴你的中转站密钥）">
+            <button class="btn-ai-save" onclick="saveAiKey()">保存</button>
+          </div>
+          <div class="ai-key-hint">密钥只保存在你本机浏览器 localStorage，不会上传，也不会写进代码仓库。</div>
+        </details>
         <div class="parse-result" id="parseResult"></div>
       </div>
     </div>
@@ -4003,30 +4014,6 @@ body {
   </div>
 </div>
 
-<!-- ═══ [settings-ai] 系统设置（老板后台，仅 admin 可见）═══ -->
-<div class="modal-bg" id="sysSettingsBg">
-  <div class="modal" style="width: 560px;">
-    <h2>⚙️ 系统设置 <span style="font-size:12px;font-weight:400;color:var(--text-secondary);">（老板后台）</span></h2>
-    <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">
-      配置 AI 中转站密钥，所有商务账号的 AI 功能统一使用此密钥，无需各自填写。
-    </p>
-    <div class="form-row">
-      <label>AI API Key</label>
-      <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
-        <input type="password" id="sysAiKeyInput" placeholder="sk-...（粘贴你的中转站密钥）" style="border:1px solid var(--border);border-radius:5px;padding:7px 9px;font-size:13px;font-family:inherit;outline:none;">
-        <div style="font-size:11px;display:flex;align-items:center;gap:6px;">
-          <span id="sysAiKeyStatus" style="font-weight:600;">配置状态：检测中…</span>
-        </div>
-        <div style="font-size:11px;color:var(--text-secondary);">密钥仅保存在 Supabase settings 表（云端），不会写进前端代码，商务端无权限查看。</div>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-ghost" onclick="closeSystemSettings()">关闭</button>
-      <button class="btn-primary" onclick="saveSystemSettings()">保存</button>
-    </div>
-  </div>
-</div>
-
 <div class="toast" id="toast"></div>
 
 <!-- 登录/注册模态 -->
@@ -4195,13 +4182,6 @@ const SESSION_KEY = 'abks_supabase_session_v1';
 let sbClient = null;
 let sbSession = null;        // 当前 Supabase 会话
 let sbUser = null;            // 当前登录用户
-
-// ═══ [settings-ai] 角色与权限：仅 admin 可见「⚙️ 设置」老板后台 ═══
-// 当前账号 3685166826@qq.com 默认 admin。商务账号不在列表中，看不到系统设置。
-const ADMIN_EMAILS = ['3685166826@qq.com'];
-function isAdmin() {
-  return !!(sbUser && ADMIN_EMAILS.indexOf((sbUser.email || '').toLowerCase()) >= 0);
-}
 let cloudStatus = 'offline';  // 'offline' | 'online' | 'syncing' | 'error'
 let realtimeChannels = [];    // 实时订阅通道
 let cloudSyncQueue = [];      // 待同步的操作队列（断网/失败时堆积）
@@ -4310,9 +4290,6 @@ function updateCloudUI() {
   const authBtn = document.getElementById('cloudAuthBtn');
   const refreshBtn = document.getElementById('cloudRefreshBtn');
   const signOutBtn = document.getElementById('cloudSignOutBtn');
-  // [settings-ai] 仅 admin 角色可见「⚙️ 设置」入口
-  const tabSettingsBtn = document.getElementById('tabSettingsBtn');
-  if (tabSettingsBtn) tabSettingsBtn.style.display = isAdmin() ? '' : 'none';
   if (!dot) return;
   dot.className = 'dot ' + cloudStatus;
   if (sbUser && cloudStatus === 'error') {
@@ -10618,14 +10595,19 @@ function openAddModal(id) {
     setAutosaveStatus('', '');
   }
 
-  // [settings-ai] 已移除用户端 AI 设置自动展开逻辑（密钥改由后台统一配置）
+  // [v65-ai] 首次使用：若本机尚未保存 AI 密钥，自动展开「🤖 AI 设置」并提示
+  try {
+    if (!getAiApiKey()) {
+      const aiSettings = document.querySelector('.ai-settings');
+      if (aiSettings) aiSettings.open = true;
+      showToast('首次使用 AI：请在「🤖 AI 设置」里粘贴你的中转站 apiKey');
+    }
+  } catch (e) {}
 
 }
 
 function closeModal() {
   document.getElementById('modalBg').classList.remove('show');
-  // [settings-ai] 关闭弹窗时清除 AI 字段高亮，避免影响下次打开
-  try { clearAiFieldMarks(); } catch (e) {}
   // 关闭弹窗时清空草稿（无论是否保存过，下次开新达人时不再有残留）
   try { localStorage.removeItem('abks_talent_draft_v1'); } catch(e) {}
   if (window._abksAutosaveTimer) { clearTimeout(window._abksAutosaveTimer); window._abksAutosaveTimer = null; }
@@ -11009,7 +10991,7 @@ function scheduleAutoParse() {
   }, 600);
 }
 
-async function parseAndFill(silent) {
+function parseAndFill(silent) {
   try {
     const input = document.getElementById('smartInput').value.trim();
     if (!input) {
@@ -11074,10 +11056,6 @@ async function parseAndFill(silent) {
     } else {
       if (!silent) showToast('未识别到字段，请检查格式');
     }
-    // [settings-ai] 本地识别完成后，自动触发 AI 后台纠错+补充（无需用户点击）
-    if (!silent) {
-      try { await runAiAutoFix(); } catch (e) { console.warn('[parseAndFill] AI 自动纠错跳过:', e); }
-    }
   } catch (err) {
     console.error('[parseAndFill] 失败:', err);
     if (!silent) showToast('识别失败：' + (err && err.message || err));
@@ -11090,13 +11068,20 @@ const AI_CONFIG = {
   baseURL: 'https://api.llm-token.cn/v1',
   model: 'claude-sonnet-4-6'
 };
-// [settings-ai] apiKey 不再从 localStorage 读取——统一从后台 settings.ai_api_key 读取。
-// 商务端不再有 AI 设置入口，密钥由 admin 在「⚙️ 设置」里统一配置到 Supabase。
+// apiKey 不写死在文件里：从浏览器 localStorage 读取（用户在「🤖 AI 设置」中粘贴），
+// 这样密钥不会进入代码仓库历史。每次调用时动态读取。
 function getAiApiKey() {
-  try { return ((settings && settings.ai_api_key) || '').trim(); }
+  try { return (localStorage.getItem('ai_token') || '').trim(); }
   catch (e) { return ''; }
 }
-// [settings-ai] 已删除 saveAiKey()：用户端不再需要保存密钥
+function saveAiKey() {
+  const el = document.getElementById('aiApiKeyInput');
+  if (!el) return;
+  const v = (el.value || '').trim();
+  if (!v) { try { localStorage.removeItem('ai_token'); } catch (e) {} showToast('已清除 AI 密钥'); return; }
+  try { localStorage.setItem('ai_token', v); } catch (e) {}
+  showToast('AI 密钥已保存到本机浏览器');
+}
 
 // AI 需要提取并回填的字段（与「新增达人」表单一一对应）
 const AI_FIELDS = {
@@ -11108,197 +11093,13 @@ const AI_FIELDS = {
   wxId:    { id: 'fWxId',    label: '微信号' }
 };
 
-// [settings-ai] 视觉反馈：本地已填=绿；AI 纠错/补充=蓝；缺失=红框
-function markFieldFilledByLocal(id) {
-  const el = document.getElementById(id);
-  if (el) el.classList.add('ai-local-filled');
-}
-function markFieldFilledByAi(id) {
-  const el = document.getElementById(id);
-  if (el) el.classList.add('ai-ai-filled');
-}
-function markFieldMissing(id) {
-  const el = document.getElementById(id);
-  if (el) el.classList.add('ai-missing');
-}
-function clearAiFieldMarks() {
-  ['ai-local-filled', 'ai-ai-filled', 'ai-missing'].forEach(cls => {
-    document.querySelectorAll('.' + cls).forEach(el => el.classList.remove(cls));
-  });
-}
-// 统计当前已填字段数（用于分级），并给本地已填字段加绿色高亮
-function countFilledFields() {
-  let n = 0;
-  for (const key of Object.keys(AI_FIELDS)) {
-    const cfg = AI_FIELDS[key];
-    const el = document.getElementById(cfg.id);
-    const val = el && el.value ? el.value.trim() : '';
-    if (val) { n++; markFieldFilledByLocal(cfg.id); }
-  }
-  return n;
-}
-
-// [settings-ai] 分级处理：按识别完整度给不同提示与高亮
-function applyRecognitionGrading() {
-  const total = Object.keys(AI_FIELDS).length; // 6 个字段（姓名/抖音号/UID/手机号/地址/微信号）
-  const filled = countFilledFields();
-  const missing = [];
-  for (const key of Object.keys(AI_FIELDS)) {
-    const cfg = AI_FIELDS[key];
-    const el = document.getElementById(cfg.id);
-    const val = el && el.value ? el.value.trim() : '';
-    if (!val) missing.push(cfg);
-  }
-  // 缺失字段红色边框
-  missing.forEach(cfg => markFieldMissing(cfg.id));
-
-  const r = document.getElementById('parseResult');
-  const parts = ['<div class="pr-title">识别完整度 ' + filled + '/' + total + '</div>'];
-  if (filled >= 7) {
-    // 当前只有 6 个字段，>=7 实际不会发生，这里保留阈值以便字段扩展
-    if (missing.length) {
-      parts.push('<div class="pr-section" style="color:#d98a00;">请补充剩余字段：</div>');
-      missing.forEach(cfg => parts.push('<span class="parse-tag miss">' + cfg.label + '</span>'));
-    } else {
-      parts.push('<div class="pr-section" style="color:#2e9e5b;">✅ 字段已完整，可直接保存</div>');
-    }
-  } else if (filled >= 4) {
-    parts.push('<div class="pr-section" style="color:#d98a00;">已识别 ' + filled + '/' + total + ' 个字段，请补充剩余信息</div>');
-    missing.forEach(cfg => parts.push('<span class="parse-tag miss">' + cfg.label + '</span>'));
-    if (r) { r.classList.add('show'); r.innerHTML = parts.join(''); }
-    return;
-  } else if (filled >= 1) {
-    if (r) {
-      r.classList.add('show');
-      r.innerHTML = '<div class="pr-title" style="color:#d63333;">识别信息较少（' + filled + '/' + total + '）</div>' +
-        '<div class="pr-section">建议补充完整后再保存：</div>' +
-        '<div style="margin-top:8px;display:flex;gap:8px;">' +
-        '<button class="btn-primary" onclick="focusFirstMissing()">继续补充</button>' +
-        '<button class="btn-ghost" onclick="saveTalent()">保存草稿</button></div>';
-    }
-    return;
-  } else {
-    if (r) {
-      r.classList.add('show');
-      r.innerHTML = '<div class="pr-title" style="color:#d63333;">未能识别到任何有效信息</div>' +
-        '<div class="pr-section">请重新粘贴达人发来的消息</div>';
-    }
-    return;
-  }
-  if (r) { r.classList.add('show'); r.innerHTML = parts.join(''); }
-}
-// 聚焦第一个缺失字段，方便用户继续补充
-function focusFirstMissing() {
-  for (const key of Object.keys(AI_FIELDS)) {
-    const cfg = AI_FIELDS[key];
-    const el = document.getElementById(cfg.id);
-    const val = el && el.value ? el.value.trim() : '';
-    if (!val) { if (el) el.focus(); break; }
-  }
-}
-
-// [settings-ai] AI 自动纠错+补充（本地识别后自动调用，无需用户点击）
-// 行为：把本地已填字段发给 AI，AI 只做两件事——纠错（修正已填错误字段）+ 补充（填本地没识别到的）
-// 不会重复填写本地已正确的字段（省 Token）。结果用蓝色高亮区分于本地绿色。
-async function runAiAutoFix() {
-  const apiKey = getAiApiKey();
-  if (!apiKey) {
-    // 未配置密钥：仅做本地分级提示，不报错打扰用户
-    applyRecognitionGrading();
-    return;
-  }
-  const input = (document.getElementById('smartInput').value || '').trim();
-  if (!input) { applyRecognitionGrading(); return; }
-
-  const btn = document.getElementById('btnAiRecognize');
-  const r = document.getElementById('parseResult');
-  let originalText = '';
-  if (btn) { originalText = btn.innerHTML; btn.disabled = true; btn.innerHTML = '🤖 AI 纠错中…'; }
-  if (r) { r.classList.add('show'); r.innerHTML = '<div class="pr-title">AI 后台纠错中</div><div class="pr-section">正在核对已填字段并补充缺失…</div>'; }
-
-  try {
-    // 组装本地已填字段，作为 AI 纠错的上下文（不重复传全文，省 Token）
-    const localFilled = {};
-    for (const key of Object.keys(AI_FIELDS)) {
-      const cfg = AI_FIELDS[key];
-      const el = document.getElementById(cfg.id);
-      const val = el && el.value ? el.value.trim() : '';
-      if (val) localFilled[key] = val;
-    }
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 30000);
-    const resp = await fetch(AI_CONFIG.baseURL + '/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-      body: JSON.stringify({
-        model: AI_CONFIG.model,
-        temperature: 0.1,
-        response_format: { type: 'json_object' },
-        messages: [
-          { role: 'system', content: '你是达人信息校验与补全助手。我会给你一段达人（抖音主播）发来的原始消息，以及本地规则已识别出的字段。请：1) 校验已识别字段是否正确，若错误请给修正值；2) 从原始消息中补全本地未识别的缺失字段。以 JSON 返回全部字段（含已正确字段原样返回），不要输出任何解释。字段：name=昵称/姓名；dyId=抖音号；uid=抖音 UID（纯数字长 ID）；phone=手机号（11 位）；address=详细收货地址；wxId=微信号。缺失或无法确认设空字符串 ""。' },
-          { role: 'user', content: '【原始消息】\n' + input + '\n\n【本地已识别】\n' + JSON.stringify(localFilled, null, 2) }
-        ]
-      }),
-      signal: controller.signal
-    });
-    clearTimeout(timer);
-    if (!resp.ok) {
-      const errText = await resp.text().catch(() => '');
-      throw new Error('API 返回 ' + resp.status + (errText ? '：' + errText.slice(0, 120) : ''));
-    }
-    const data = await resp.json();
-    const content = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-    if (!content) throw new Error('AI 返回内容为空');
-    let parsed;
-    try { parsed = JSON.parse(content); }
-    catch (e) {
-      const m = content.match(/\{[\s\S]*\}/);
-      if (m) parsed = JSON.parse(m[0]); else throw new Error('AI 返回不是合法 JSON');
-    }
-
-    const corrected = [], supplemented = [], kept = [];
-    for (const key of Object.keys(AI_FIELDS)) {
-      const cfg = AI_FIELDS[key];
-      const aiVal = (parsed[key] != null ? String(parsed[key]) : '').trim();
-      const el = document.getElementById(cfg.id);
-      const localVal = el && el.value ? el.value.trim() : '';
-      if (!aiVal) continue;
-      if (!localVal) {
-        // 本地没识别 → AI 补充
-        setFieldIfEmpty(cfg.id, aiVal, false);
-        markFieldFilledByAi(cfg.id);
-        supplemented.push(cfg.label);
-      } else if (localVal !== aiVal) {
-        // 本地已填但与 AI 不一致 → AI 纠错（用 AI 值覆盖，并蓝色高亮）
-        el.value = aiVal;
-        markFieldFilledByAi(cfg.id);
-        corrected.push(cfg.label);
-      } else {
-        kept.push(cfg.label);
-      }
-    }
-
-    // 分级处理（含 AI 纠错/补充后的最终完整度）
-    applyRecognitionGrading();
-    if (corrected.length) showToast('🤖 AI 已修正 ' + corrected.length + ' 个字段');
-    else if (supplemented.length) showToast('🤖 AI 已补充 ' + supplemented.length + ' 个字段');
-  } catch (err) {
-    console.warn('[runAiAutoFix] 失败（不影响本地识别结果）:', err);
-    // AI 失败时退回纯本地分级，不弹错误打扰
-    applyRecognitionGrading();
-  } finally {
-    if (btn) { btn.disabled = false; btn.innerHTML = originalText; }
-  }
-}
-
-// [settings-ai] 手动触发的 AI 智能识别（从文本提取，按钮「🤖 AI 智能识别」）
 async function aiRecognizeTalent() {
   const input = (document.getElementById('smartInput').value || '').trim();
   const btn = document.getElementById('btnAiRecognize');
   const r = document.getElementById('parseResult');
   if (!input) { showToast('请先粘贴达人消息再点 AI 识别'); return; }
   const apiKey = getAiApiKey();
-  if (!apiKey) { showToast('请联系管理员配置 AI 密钥（⚙️ 设置）'); return; }
+  if (!apiKey) { showToast('请先在「🤖 AI 设置」里粘贴你的中转站 apiKey'); return; }
 
   const originalText = btn.innerHTML;
   btn.disabled = true;
@@ -11352,7 +11153,7 @@ async function aiRecognizeTalent() {
       const val = (parsed[key] != null ? String(parsed[key]) : '').trim();
       if (!val) { missed.push(cfg.label); continue; }
       const changed = setFieldIfEmpty(cfg.id, val, false);
-      if (changed) { filled.push(cfg.label); markFieldFilledByAi(cfg.id); }
+      if (changed) filled.push(cfg.label);
       else skipped.push(cfg.label + '（表单已填，跳过）');
     }
 
@@ -11371,8 +11172,6 @@ async function aiRecognizeTalent() {
     }
     r.innerHTML = parts.join('');
     if (filled.length) showToast('AI 已自动填充 ' + filled.length + ' 个字段');
-    // 手动识别后也做分级
-    applyRecognitionGrading();
   } catch (err) {
     console.error('[aiRecognizeTalent] 失败:', err);
     let msg = err && err.message ? err.message : String(err);
@@ -11897,57 +11696,6 @@ function saveSettings() {
   saveSettingsData(s);
   document.getElementById('settingsBg').classList.remove('show');
   showToast('话术已保存');
-}
-
-// ═══ [settings-ai] 系统设置（老板后台，仅 admin 可见）═══
-function openSystemSettings() {
-  if (!isAdmin()) { showToast('仅管理员可访问系统设置'); return; }
-  refreshSysAiKeyStatus();
-  document.getElementById('sysSettingsBg').classList.add('show');
-}
-function closeSystemSettings() {
-  document.getElementById('sysSettingsBg').classList.remove('show');
-}
-function refreshSysAiKeyStatus() {
-  const el = document.getElementById('sysAiKeyStatus');
-  const input = document.getElementById('sysAiKeyInput');
-  const configured = !!(settings && settings.ai_api_key);
-  if (el) {
-    el.textContent = '配置状态：' + (configured ? '✅ 已配置' : '⚪ 未配置');
-    el.style.color = configured ? '#2e9e5b' : '#9aa4b2';
-  }
-  if (input && !configured) input.value = '';
-  if (input && configured) input.placeholder = '已配置密钥（留空则不修改）';
-}
-async function saveSystemSettings() {
-  if (!isAdmin()) { showToast('仅管理员可保存系统设置'); return; }
-  if (!sbUser) { showToast('请先登录云端再保存'); return; }
-  const input = document.getElementById('sysAiKeyInput');
-  const v = (input.value || '').trim();
-  // 留空且已配置 → 不修改；留空且未配置 → 提示必须填
-  if (!v) {
-    if (settings && settings.ai_api_key) {
-      showToast('密钥未修改（保持已配置）');
-      closeSystemSettings();
-      return;
-    }
-    showToast('请粘贴 AI API Key 后再保存');
-    return;
-  }
-  // 写入内存 settings 对象
-  if (!settings) settings = {};
-  settings.ai_api_key = v;
-  saveSettingsData(settings);
-  // 同步到 Supabase settings 表（与本地 saveSettingsData 保持同一 upsert 通道）
-  try {
-    await sbClient.from('settings').upsert({ user_id: sbUser.id, data: settings });
-    showToast('✅ AI 密钥已保存到云端');
-  } catch (e) {
-    console.error('[saveSystemSettings] 云端保存失败', e);
-    showToast('本地已保存，但云端同步失败：' + (e && e.message || e));
-  }
-  refreshSysAiKeyStatus();
-  closeSystemSettings();
 }
 
 // ========== 工具 ==========
