@@ -197,82 +197,140 @@ body {
   box-shadow: 0 2px 6px rgba(58,143,255,0.25);
 }
 
-/* 登录模态 */
+/* ===== Silent Power 静默登录遮罩（Linear/Stripe/Vercel 风格） ===== */
+/* 主界面未登录锁定：不可见 + 不可交互 */
+.app.auth-locked {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .5s ease, visibility 0s linear .5s;
+}
+.app:not(.auth-locked) {
+  transition: opacity .5s ease;
+}
+/* 全屏遮罩 + 静默底色 #08090A */
 .auth-modal-bg {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.7);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 9999;
+  background: #08090A;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 99999;
+  opacity: 1;
+  transition: opacity .5s ease;
+  overflow: hidden;
 }
-.auth-modal {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 32px;
-  width: 360px;
-  max-width: 92vw;
-  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
-  color: var(--text);
+.auth-modal-bg.hide { opacity: 0; pointer-events: none; }
+/* 超大半径径向渐变光晕（呼吸位移） */
+.auth-glow {
+  position: fixed; inset: -20%;
+  background: radial-gradient(800px 800px at 50% 45%, rgba(59,130,246,0.07), transparent 60%),
+              radial-gradient(800px 800px at 50% 45%, rgba(139,92,246,0.06), transparent 60%);
+  z-index: 0;
+  pointer-events: none;
+  animation: authBreath 15s ease-in-out infinite;
 }
-.auth-modal h2 { font-size: 18px; margin-bottom: 4px; }
-.auth-modal .sub { color: var(--text-secondary); font-size: 13px; margin-bottom: 18px; }
-.auth-modal .field { margin-bottom: 12px; }
-.auth-modal .field label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
-.auth-modal .field input {
-  width: 100%;
-  padding: 9px 11px;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text);
-  border-radius: 7px;
-  font-size: 14px;
+@keyframes authBreath {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(2.5%, 2%) scale(1.03); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+/* 品牌区（垂直居中，与卡片一体化分区） */
+.auth-brand-zone {
+  position: relative; z-index: 1;
+  text-align: center;
+  animation: brandIn .8s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes brandIn {
+  from { opacity: 0; transform: scale(.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.auth-logo {
+  font-size: 64px; font-weight: 700; letter-spacing: 4px;
+  color: #ffffff; line-height: 1;
+}
+.auth-sub1 { font-size: 18px; font-weight: 300; color: #6B7280; margin-top: 12px; }
+.auth-headline { font-size: 28px; font-weight: 300; color: #3B82F6; margin-top: 16px; line-height: 1.4; }
+
+/* 登录卡片（毛玻璃，与品牌区间隔 32px） */
+.auth-card {
+  position: relative; z-index: 1;
+  width: 380px; max-width: 92vw;
+  margin-top: 32px;
+  padding: 40px 36px;
+  border-radius: 24px;
+  background: rgba(255,255,255,0.03);
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: #fff;
+  animation: cardIn .6s cubic-bezier(.2,.8,.2,1) .2s both;
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+/* 动态旋转渐变边框（极淡） */
+.auth-card::before {
+  content: "";
+  position: absolute; inset: -1px;
+  border-radius: 24px;
+  padding: 1px;
+  background: conic-gradient(from 0deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15), rgba(59,130,246,0.15));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: borderSpin 8s linear infinite;
+  pointer-events: none;
+}
+@keyframes borderSpin { to { transform: rotate(360deg); } }
+
+.auth-card .field { margin-bottom: 20px; text-align: left; }
+.auth-card .field label { display: block; font-size: 12px; font-weight: 300; color: #9CA3AF; margin-bottom: 8px; }
+.auth-card .field input {
+  width: 100%; padding: 0 0 10px;
+  border: none;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  background: transparent;
+  color: #fff;
+  font-size: 15px; font-weight: 300;
   outline: none;
-  transition: border-color .15s;
+  box-sizing: border-box;
+  transition: border-color .3s ease, box-shadow .3s ease;
 }
-.auth-modal .field input:focus { border-color: var(--blue); }
-.auth-modal .err {
-  color: var(--pink);
-  font-size: 12px;
-  margin-bottom: 8px;
-  min-height: 16px;
+.auth-card .field input::placeholder { color: #6B7280; font-weight: 300; }
+.auth-card .field input:focus {
+  border-bottom-color: #3B82F6;
+  box-shadow: 0 1px 0 0 #3B82F6, 0 6px 18px -8px rgba(59,130,246,0.6);
 }
-.auth-modal .actions { display: flex; gap: 8px; margin-top: 8px; }
-.auth-modal .actions button {
-  flex: 1;
-  padding: 9px 14px;
-  border-radius: 7px;
-  border: 1px solid var(--border);
-  background: var(--card-2);
-  color: var(--text);
-  cursor: pointer;
-  font-size: 14px;
-  transition: all .15s;
+.auth-card .err { color: #f87171; font-size: 12px; font-weight: 300; margin-bottom: 8px; min-height: 16px; }
+.auth-card .login-btn {
+  width: 100%; height: 52px; border: none; border-radius: 12px; cursor: pointer;
+  background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+  color: #fff; font-size: 16px; font-weight: 600;
+  transition: transform .3s cubic-bezier(0.25,0.46,0.45,0.94), box-shadow .3s cubic-bezier(0.25,0.46,0.45,0.94);
 }
-.auth-modal .actions .primary {
-  background: var(--primary);
-  color: var(--primary-on);
-  border-color: var(--primary);
+.auth-card .login-btn:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 30px -6px rgba(99,102,241,0.6);
 }
-.auth-modal .actions .primary:hover { background: var(--primary-hover); color: #fff; }
-.auth-modal .actions .ghost:hover { background: var(--card-hover); }
-.auth-modal .switch {
+.auth-card .switch { text-align: center; font-size: 14px; font-weight: 400; color: #9CA3AF; margin-top: 16px; cursor: pointer; user-select: none; }
+.auth-card .switch b { color: #3B82F6; font-weight: 400; }
+.auth-card .switch:hover b { text-decoration: underline; }
+
+/* 底部信任区 */
+.auth-trust {
+  position: fixed; bottom: 48px; left: 0; right: 0; z-index: 1;
   text-align: center;
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-top: 14px;
-  cursor: pointer;
-  user-select: none;
+  font-size: 12px; font-weight: 300; color: rgba(255,255,255,0.15);
+  letter-spacing: .3px;
 }
-.auth-modal .switch:hover { color: var(--blue); }
-.auth-modal .skip {
-  text-align: center;
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-top: 10px;
-  cursor: pointer;
-  user-select: none;
+.auth-toast {
+  position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%);
+  background: rgba(20,22,26,0.96); border: 1px solid rgba(255,255,255,0.1); color: #e5e7eb;
+  padding: 10px 18px; border-radius: 10px; font-size: 13px; z-index: 100001; opacity: 0; transition: opacity .3s;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
-.auth-modal .skip:hover { color: var(--pink); }
+.auth-toast.show { opacity: 1; }
 
 .btn-icon {
   background: var(--card-2);
@@ -3496,7 +3554,7 @@ body {
 </head>
 <body>
 
-<div class="app">
+<div class="app auth-locked">
   <!-- 顶部 -->
   <div class="header">
     <h1>ABKS 达人管理工作台<span class="header-version">| v63-pipeline · 2026.08.23</span></h1>
@@ -4091,28 +4149,31 @@ body {
 
 <div class="toast" id="toast"></div>
 
-<!-- 登录/注册模态 -->
-<div class="auth-modal-bg" id="authModalBg" style="display:none;">
-  <div class="auth-modal">
-    <h2 id="authTitle">登录云端</h2>
-    <div class="sub" id="authSub">登录后三端实时同步，电脑/手机/网页数据一致</div>
+<!-- 王者荣耀风格登录遮罩（默认显示，未登录时覆盖整个主界面） -->
+<!-- [login-ai] AI 智能登录 + 数据预览遮罩 -->
+<div class="auth-modal-bg" id="authModalBg">
+  <div class="auth-glow"></div>
+  <div class="auth-brand-zone">
+    <div class="auth-logo">ABKS</div>
+    <div class="auth-sub1">达人管理工作台</div>
+    <div class="auth-headline">让达人运营更高效</div>
+  </div>
+  <div class="auth-card">
     <div class="field">
       <label>邮箱</label>
       <input type="email" id="authEmail" placeholder="you@example.com" autocomplete="email">
     </div>
     <div class="field">
-      <label>密码（至少 6 位）</label>
+      <label>密码</label>
       <input type="password" id="authPassword" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')authSubmit()">
     </div>
     <div class="err" id="authErr"></div>
-    <div class="actions">
-      <button class="ghost" onclick="hideAuthModal()">取消</button>
-      <button class="primary" onclick="authSubmit()" id="authSubmitBtn">登录</button>
-    </div>
-    <div class="switch" id="authSwitch" onclick="authToggleMode()">还没有账号？立即注册</div>
-    <div class="skip" onclick="hideAuthModal()">跳过，继续用本地模式（数据仅存在此浏览器）</div>
+    <button class="login-btn" onclick="authSubmit()" id="authSubmitBtn">登录</button>
+    <div class="switch" id="authSwitch" onclick="authToggleMode()">还没有账号？<b>立即注册</b></div>
   </div>
+  <div class="auth-trust">企业级加密 · 数据实时同步 · AI 驱动</div>
 </div>
+<div class="auth-toast" id="authToast"></div>
 
 <input type="file" id="fileInput" style="display:none" accept=".json" onchange="handleImport(event)">
 
@@ -4331,6 +4392,11 @@ function initSupabase() {
             cloudStatus = 'offline';
             stopRealtime();
             renderAll();
+            // 退出登录 → 重新锁定主界面 + 显示登录遮罩
+            const app = document.querySelector('.app');
+            if (app) app.classList.add('auth-locked');
+            const bg = document.getElementById('authModalBg');
+            if (bg) { bg.style.display = 'flex'; bg.classList.remove('hide'); }
           }
         } catch (e) { console.warn('[onAuthStateChange]', e); }
       });
@@ -4342,6 +4408,8 @@ function initSupabase() {
       if (sbUser) {
         cloudStatus = 'online';
         bootstrapFromCloud();
+        // 已有登录会话：直接淡出遮罩，无需手动登录
+        hideAuthModal();
       }
       updateCloudUI();
     }).catch(e => console.warn('[getSession]', e));
@@ -4459,13 +4527,12 @@ function showAuthModal() {
     _authMode = 'signin';
     const bg = document.getElementById('authModalBg');
     if (!bg) { console.error('[showAuthModal] authModalBg 不存在！'); return; }
-    const t = document.getElementById('authTitle'); if (t) t.textContent = '登录云端';
-    const s = document.getElementById('authSub');   if (s) s.textContent = '登录后三端实时同步，电脑/手机/网页数据一致';
     const b = document.getElementById('authSubmitBtn'); if (b) b.textContent = '登录';
     const w = document.getElementById('authSwitch');  if (w) w.textContent = '还没有账号？立即注册';
     const em = document.getElementById('authEmail'); if (em) em.value = '';
     const pw = document.getElementById('authPassword'); if (pw) pw.value = '';
     const er = document.getElementById('authErr'); if (er) er.textContent = '';
+    bg.classList.remove('hide');
     bg.style.display = 'flex';
     setTimeout(() => {
       const e = document.getElementById('authEmail');
@@ -4477,23 +4544,37 @@ function showAuthModal() {
   }
 }
 function hideAuthModal() {
-  document.getElementById('authModalBg').style.display = 'none';
+  const bg = document.getElementById('authModalBg');
+  if (!bg) return;
+  // 淡出遮罩（0.5s）后隐藏
+  bg.classList.add('hide');
+  setTimeout(() => { bg.style.display = 'none'; }, 520);
+  // 解锁主界面：淡入可见 + 可交互
+  const app = document.querySelector('.app');
+  if (app) app.classList.remove('auth-locked');
+  // 登录成功后渲染业务数据 + 更新云端状态条为「已连接云端」
+  try {
+    if (typeof renderAll === 'function') renderAll();
+    if (typeof updateCloudUI === 'function') updateCloudUI();
+    const bar = document.getElementById('cloudBar');
+    if (bar && sbUser) {
+      bar.innerHTML = '<span class="cloud-dot" style="background:#3ecf6b"></span> 已连接云端 · ' + escapeHtml(sbUser.email || '');
+    }
+  } catch (e) { console.warn('[hideAuthModal] 解锁渲染失败', e); }
 }
+
+
 function authToggleMode() {
   if (_authMode === 'signin') {
     _authMode = 'signup';
-    document.getElementById('authTitle').textContent = '注册账号';
-    document.getElementById('authSub').textContent = '注册即可三端实时同步，无需邮件验证';
-    document.getElementById('authSubmitBtn').textContent = '注册并登录';
-    document.getElementById('authSwitch').textContent = '已有账号？去登录';
+    const b = document.getElementById('authSubmitBtn'); if (b) b.textContent = '注册并登录';
+    const w = document.getElementById('authSwitch');  if (w) w.textContent = '已有账号？去登录';
   } else {
     _authMode = 'signin';
-    document.getElementById('authTitle').textContent = '登录云端';
-    document.getElementById('authSub').textContent = '登录后三端实时同步，电脑/手机/网页数据一致';
-    document.getElementById('authSubmitBtn').textContent = '登录';
-    document.getElementById('authSwitch').textContent = '还没有账号？立即注册';
+    const b = document.getElementById('authSubmitBtn'); if (b) b.textContent = '登录';
+    const w = document.getElementById('authSwitch');  if (w) w.textContent = '还没有账号？立即注册';
   }
-  document.getElementById('authErr').textContent = '';
+  const e = document.getElementById('authErr'); if (e) e.textContent = '';
 }
 
 async function authSubmit() {
@@ -11268,6 +11349,7 @@ document.addEventListener('DOMContentLoaded', function() {
   //            60s 一次，经 runAutoRegenThrottled 节流与重入锁保护，避免频繁全量扫描/重绘；
   //            init 之后才启动，避免在未初始化前空跑。
   setInterval(runAutoRegenThrottled, 60000);
+  // 首屏（未登录）登录遮罩默认显示，无需额外启动粒子/预览
 });
 
 // ========== 智能识别 ==========
