@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ABKS 达人管理工作台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@500;600;700&family=Jost:wght@300;400;500;600&family=Noto+Serif+SC:wght@400;500;600&display=swap" rel="stylesheet">
 <!-- Supabase JS（IIFE 版本，挂 window.supabase） -->
 <!-- 用 onerror 兜底，jsdelivr 加载失败时换 unpkg；再失败就彻底本地降级 -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" onerror="console.warn('[导出] SheetJS CDN 失败，将回退到 CSV')"></script>
@@ -208,122 +211,262 @@ body {
 .app:not(.auth-locked) {
   transition: opacity .5s ease;
 }
-/* 全屏遮罩 + 静默底色 #08090A */
+/* 午夜香槟：全屏遮罩与品牌叙事舞台 */
 .auth-modal-bg {
   position: fixed; inset: 0;
-  background: #08090A;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: #080a0f;
+  display: grid;
+  grid-template-columns: minmax(0, 55fr) minmax(0, 45fr);
+  align-items: center;
+  gap: clamp(40px, 8vw, 136px);
+  padding: clamp(30px, 5vw, 72px);
+  box-sizing: border-box;
   z-index: 99999;
   opacity: 1;
   transition: opacity .5s ease;
   overflow: hidden;
+  font-family: "Jost", "PingFang SC", "Microsoft YaHei", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 .auth-modal-bg.hide { opacity: 0; pointer-events: none; }
-/* 超大半径径向渐变光晕（呼吸位移） */
+/* 参考页的左上蓝光与右下紫光：更柔和、更有午夜氛围 */
+.auth-particles {
+  position: fixed; inset: 0; width: 100%; height: 100%;
+  z-index: 0; pointer-events: none; opacity: .72;
+}
 .auth-glow {
-  position: fixed; inset: -20%;
-  background: radial-gradient(800px 800px at 50% 45%, rgba(59,130,246,0.07), transparent 60%),
-              radial-gradient(800px 800px at 50% 45%, rgba(139,92,246,0.06), transparent 60%);
+  position: fixed; inset: 0;
   z-index: 0;
   pointer-events: none;
-  animation: authBreath 15s ease-in-out infinite;
+  overflow: hidden;
 }
-@keyframes authBreath {
-  0%   { transform: translate(0, 0) scale(1); }
-  50%  { transform: translate(2.5%, 2%) scale(1.03); }
-  100% { transform: translate(0, 0) scale(1); }
+.auth-glow::before,
+.auth-glow::after {
+  content: "";
+  position: absolute;
+  width: 48vw; height: 48vw;
+  border-radius: 50%;
+  filter: blur(8px);
+  z-index: -1;
+  animation: champagneBreathe 15s ease-in-out infinite;
+}
+.auth-glow::before {
+  left: -18vw; top: -25vw;
+  background: radial-gradient(circle, rgba(59,130,246,.27), transparent 68%);
+}
+.auth-glow::after {
+  right: -20vw; bottom: -30vw;
+  background: radial-gradient(circle, rgba(139,92,246,.24), transparent 68%);
+  animation-delay: -7.5s;
+}
+@keyframes champagneBreathe {
+  50% { transform: scale(1.14); opacity: .72; }
+}
+@keyframes lightOrbitBlue {
+  0%, 100% { transform: translate(0, 0) scale(.92); opacity: .06; }
+  25% { transform: translate(25vw, 9vh) scale(1.05); opacity: .11; }
+  50% { transform: translate(50vw, 28vh) scale(1.12); opacity: .15; }
+  75% { transform: translate(24vw, 48vh) scale(1.02); opacity: .09; }
+}
+@keyframes lightOrbitPurple {
+  0%, 100% { transform: translate(0, 0) scale(.94); opacity: .07; }
+  25% { transform: translate(-22vw, -10vh) scale(1.06); opacity: .12; }
+  50% { transform: translate(-48vw, -27vh) scale(1.14); opacity: .15; }
+  75% { transform: translate(-24vw, -48vh) scale(1.01); opacity: .09; }
 }
 
-/* 品牌区（垂直居中，与卡片一体化分区） */
+/* 品牌区（左侧垂直居中，复刻参考页的叙事结构） */
 .auth-brand-zone {
-  position: relative; z-index: 1;
-  text-align: center;
+  position: relative; top: 0; z-index: 1;
+  width: 100%; min-width: 0; max-width: 600px;
+  min-height: 70vh;
+  display: flex; flex-direction: column; justify-content: center;
+  text-align: left;
   animation: brandIn .8s cubic-bezier(.2,.8,.2,1) both;
 }
 @keyframes brandIn {
-  from { opacity: 0; transform: scale(.94); }
-  to   { opacity: 1; transform: scale(1); }
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 .auth-logo {
-  font-size: 64px; font-weight: 700; letter-spacing: 4px;
-  color: #ffffff; line-height: 1;
+  font: 600 clamp(58px, 7vw, 76px)/.95 "Bodoni Moda", "Noto Serif SC", "Songti SC", serif;
+  letter-spacing: .16em;
+  color: #F0D39A;
+  text-shadow: 0 0 26px rgba(214,180,119,.28);
 }
-.auth-sub1 { font-size: 18px; font-weight: 300; color: #6B7280; margin-top: 12px; }
-.auth-headline { font-size: 28px; font-weight: 300; color: #3B82F6; margin-top: 16px; line-height: 1.4; }
+.auth-sub1 {
+  font-size: 20px; font-weight: 300; letter-spacing: .12em;
+  color: rgba(255,255,255,.3); margin-top: 18px;
+}
+.auth-headline {
+  margin: clamp(74px, 10vw, 136px) 0 0;
+  color: #60A5FA;
+  font: 500 clamp(30px, 3.6vw, 38px)/1.34 "Noto Serif SC", "Bodoni Moda", "Songti SC", serif;
+  letter-spacing: .01em;
+  text-shadow: 0 0 22px rgba(59,130,246,.18);
+}
+.auth-headline::after {
+  content: "连接好达人，做好合作，让每一次运营都更有回报。";
+  display: block;
+  max-width: 460px;
+  margin-top: 17px;
+  color: rgba(229,238,255,.56);
+  font: 300 16px/1.75 "Jost", "PingFang SC", "Microsoft YaHei", sans-serif;
+  letter-spacing: .04em;
+}
 
-/* 登录卡片（毛玻璃，与品牌区间隔 32px） */
+/* 登录卡片（右侧毛玻璃） */
 .auth-card {
   position: relative; z-index: 1;
-  width: 380px; max-width: 92vw;
-  margin-top: 32px;
-  padding: 40px 36px;
-  border-radius: 24px;
-  background: rgba(255,255,255,0.03);
+  width: min(430px, 100%); max-width: 430px; min-width: 0;
+  margin: auto;
+  padding: clamp(30px, 4vw, 48px);
+  border-radius: 18px;
+  background: rgba(16,24,39,.72);
   -webkit-backdrop-filter: blur(24px);
   backdrop-filter: blur(24px);
-  border: 1px solid rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,.14);
   color: #fff;
-  animation: cardIn .6s cubic-bezier(.2,.8,.2,1) .2s both;
+  box-shadow: 0 28px 90px -48px rgba(59,130,246,.58), 0 34px 100px -56px rgba(139,92,246,.52);
+  animation: cardIn .7s cubic-bezier(.2,.8,.2,1) .16s both;
+}
+.auth-card h2 {
+  margin: 0;
+  color: #F8FBFF;
+  font: 500 27px/1.25 "Noto Serif SC", "Songti SC", serif;
+  letter-spacing: .02em;
+}
+.auth-card .intro {
+  margin: 10px 0 30px;
+  color: rgba(229,238,255,.56);
+  font-size: 14px; font-weight: 300; letter-spacing: .04em;
 }
 @keyframes cardIn {
-  from { opacity: 0; transform: translateY(24px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
-/* 动态旋转渐变边框（极淡） */
+/* 8–12 秒一圈的极淡旋转渐变边框 */
 .auth-card::before {
   content: "";
   position: absolute; inset: -1px;
   border-radius: 24px;
   padding: 1px;
-  background: conic-gradient(from 0deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15), rgba(59,130,246,0.15));
+  background: conic-gradient(from 0deg, rgba(59,130,246,.12), rgba(139,92,246,.15), rgba(255,255,255,.04), rgba(59,130,246,.12));
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  animation: borderSpin 8s linear infinite;
+  animation: borderSpin 10s linear infinite;
   pointer-events: none;
 }
 @keyframes borderSpin { to { transform: rotate(360deg); } }
 
-.auth-card .field { margin-bottom: 20px; text-align: left; }
-.auth-card .field label { display: block; font-size: 12px; font-weight: 300; color: #9CA3AF; margin-bottom: 8px; }
+.auth-card .field { margin-bottom: 24px; text-align: left; }
+.auth-card .field label { display: block; font-size: 12px; font-weight: 300; color: rgba(255,255,255,.48); letter-spacing: .03em; margin-bottom: 8px; }
 .auth-card .field input {
   width: 100%; padding: 0 0 10px;
-  border: none;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-  background: transparent;
-  color: #fff;
-  font-size: 15px; font-weight: 300;
-  outline: none;
-  box-sizing: border-box;
+  border: none; border-radius: 0;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  background: transparent; color: #fff;
+  font-size: 15px; font-weight: 300; letter-spacing: .01em;
+  outline: none; box-sizing: border-box;
   transition: border-color .3s ease, box-shadow .3s ease;
 }
-.auth-card .field input::placeholder { color: #6B7280; font-weight: 300; }
+.auth-card .field input::placeholder { color: rgba(255,255,255,.25); font-weight: 300; }
 .auth-card .field input:focus {
-  border-bottom-color: #3B82F6;
-  box-shadow: 0 1px 0 0 #3B82F6, 0 6px 18px -8px rgba(59,130,246,0.6);
+  border-bottom-color: #F0D39A;
+  box-shadow: 0 1px 0 0 #F0D39A, 0 8px 22px -10px rgba(214,180,119,.72);
 }
 .auth-card .err { color: #f87171; font-size: 12px; font-weight: 300; margin-bottom: 8px; min-height: 16px; }
 .auth-card .login-btn {
   width: 100%; height: 52px; border: none; border-radius: 12px; cursor: pointer;
-  background: linear-gradient(135deg, #3B82F6, #8B5CF6);
-  color: #fff; font-size: 16px; font-weight: 600;
-  transition: transform .3s cubic-bezier(0.25,0.46,0.45,0.94), box-shadow .3s cubic-bezier(0.25,0.46,0.45,0.94);
+  background: linear-gradient(110deg, #9B6B35 0%, #D6B477 52%, #F0D39A 100%);
+  color: #17130D; font-size: 16px; font-weight: 600; letter-spacing: .04em;
+  box-shadow: 0 10px 28px -14px rgba(214,180,119,.72);
+  transition: transform .3s cubic-bezier(.25,.46,.45,.94), box-shadow .3s cubic-bezier(.25,.46,.45,.94);
 }
 .auth-card .login-btn:hover {
   transform: scale(1.02);
-  box-shadow: 0 8px 30px -6px rgba(99,102,241,0.6);
+  box-shadow: 0 12px 42px -8px rgba(214,180,119,.62);
 }
-.auth-card .switch { text-align: center; font-size: 14px; font-weight: 400; color: #9CA3AF; margin-top: 16px; cursor: pointer; user-select: none; }
+.auth-card .auth-options {
+  display: flex; align-items: center; justify-content: space-between;
+  margin: -4px 0 26px; color: rgba(229,238,255,.46);
+  font-size: 12px; font-weight: 300;
+}
+.auth-card .auth-options label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.auth-card .auth-options input { accent-color: #F0D39A; }
+.auth-card .auth-options .link { color: rgba(240,211,154,.78); cursor: pointer; }
+.auth-card .switch { text-align: center; font-size: 14px; font-weight: 400; color: rgba(255,255,255,.42); margin-top: 26px; cursor: pointer; user-select: none; }
 .auth-card .switch b { color: #3B82F6; font-weight: 400; }
 .auth-card .switch:hover b { text-decoration: underline; }
 
-/* 底部信任区 */
-.auth-trust {
-  position: fixed; bottom: 48px; left: 0; right: 0; z-index: 1;
-  text-align: center;
-  font-size: 12px; font-weight: 300; color: rgba(255,255,255,0.15);
-  letter-spacing: .3px;
+/* 品牌区底部信任信息（复刻参考页） */
+.auth-brand-trust {
+  display: flex; flex-wrap: wrap; gap: 14px 24px;
+  margin-top: clamp(72px, 10vw, 128px);
+  color: rgba(229,238,255,.32);
+  font-size: 12px; font-weight: 300; letter-spacing: .08em;
 }
+.auth-brand-trust span { white-space: nowrap; }
+/* 旧版底部信任区保留 DOM 兼容，但不再重复显示 */
+.auth-trust { display: none; }
+@media (max-width: 980px) and (min-width: 781px) {
+  .auth-modal-bg { gap: 32px; padding: 24px 30px; }
+  .auth-brand-zone { min-height: 70vh; }
+  .auth-card { padding: 30px; }
+  .auth-headline { margin-top: 68px; font-size: 30px; }
+  .auth-brand-trust { margin-top: 68px; }
+}
+@media (max-width: 780px) {
+  .auth-modal-bg { display: flex; flex-direction: column; gap: 30px; padding: 40px 20px 60px; overflow-y: auto; }
+  .auth-brand-zone { width: min(600px, 92vw); min-height: auto; text-align: center; }
+  .auth-card { width: min(430px, 92vw); max-width: none; }
+  .auth-logo { font-size: 52px; }
+  .auth-headline { margin-top: 58px; font-size: 28px; }
+  .auth-headline::after { margin-left: auto; margin-right: auto; }
+  .auth-brand-trust { justify-content: center; margin-top: 52px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .auth-glow::before, .auth-glow::after, .auth-card::before, .auth-brand-zone, .auth-card { animation: none; }
+  .auth-particles { display: none; }
+}
+/* 参考样板 1:1 样式映射：仅作用于登录模块 */
+.auth-modal-bg { display: block; padding: 0; background: #080a0f; overflow: hidden; isolation: isolate; }
+.auth-modal-bg::before, .auth-modal-bg::after { content: ""; position: fixed; width: 48vw; height: 48vw; border-radius: 50%; z-index: -2; filter: blur(8px); animation: authReferenceBreathe 15s ease-in-out infinite; pointer-events: none; }
+.auth-modal-bg::before { left: -18vw; top: -25vw; background: radial-gradient(circle, rgba(59,130,246,.27), transparent 68%); }
+.auth-modal-bg::after { right: -20vw; bottom: -30vw; background: radial-gradient(circle, rgba(139,92,246,.24), transparent 68%); animation-delay: -7.5s; }
+@keyframes authReferenceBreathe { 50% { transform: scale(1.14); opacity: .72; } }
+.auth-shell { width: min(1380px, 100%); min-height: 100vh; margin: auto; padding: clamp(30px, 5vw, 72px); display: grid; grid-template-columns: 55fr 45fr; gap: clamp(40px, 8vw, 136px); align-items: center; box-sizing: border-box; position: relative; z-index: 2; }
+.auth-brand { min-height: 70vh; display: flex; flex-direction: column; justify-content: center; text-align: left; animation: authBrandIn .8s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes authBrandIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+.auth-logo { font: 600 clamp(58px,7vw,76px)/.95 "Bodoni Moda", "Noto Serif SC", "Songti SC", serif; letter-spacing: .16em; color: #F0D39A; text-shadow: 0 0 26px rgba(214,180,119,.28); }
+.auth-subtitle { margin: 18px 0 0; color: rgba(255,255,255,.3); font-size: 20px; font-weight: 300; letter-spacing: .12em; }
+.auth-copy { margin-top: clamp(74px,10vw,136px); }
+.auth-copy h1 { margin: 0; color: #60A5FA; font: 500 clamp(30px,3.6vw,38px)/1.34 "Noto Serif SC", "Bodoni Moda", "Songti SC", serif; letter-spacing: .01em; text-shadow: 0 0 22px rgba(59,130,246,.18); }
+.auth-copy p { margin: 17px 0 0; color: rgba(229,238,255,.56); font-size: 16px; font-weight: 300; letter-spacing: .04em; line-height: 1.75; }
+.auth-trust { display: flex; flex-wrap: wrap; gap: 14px 24px; margin-top: clamp(72px,10vw,128px); color: rgba(229,238,255,.32); font-size: 12px; letter-spacing: .08em; }
+.auth-card { width: min(430px,100%); margin: auto; padding: clamp(30px,4vw,48px); border-radius: 18px; background: rgba(16,24,39,.72); border: 1px solid rgba(255,255,255,.14); box-shadow: 0 20px 50px rgba(0,0,0,.22); color: #F8FBFF; }
+.auth-card h2 { margin: 0; color: #F8FBFF; font: 600 26px/1.25 "Noto Serif SC", "Songti SC", serif; }
+.auth-intro { margin: 10px 0 30px; color: rgba(229,238,255,.56); font-size: 14px; font-weight: 300; line-height: 1.5; }
+.auth-field { margin-bottom: 20px; }
+.auth-field label { display: block; margin-bottom: 8px; color: rgba(229,238,255,.72); font-size: 12px; font-weight: 400; }
+.auth-field input { width: 100%; padding: 10px 0; border: 0; border-bottom: 1px solid rgba(255,255,255,.14); border-radius: 0; background: transparent; color: #F8FBFF; font: 300 14px "Jost","PingFang SC","Microsoft YaHei",sans-serif; outline: none; box-sizing: border-box; transition: border-color .2s, box-shadow .2s; }
+.auth-field input::placeholder { color: rgba(229,238,255,.32); }
+.auth-field input:focus { border-bottom-color: #F0D39A; box-shadow: 0 1px 0 0 #F0D39A, 0 8px 22px -10px rgba(214,180,119,.72); }
+.auth-row { display: flex; align-items: center; justify-content: space-between; margin: 2px 0 24px; color: rgba(229,238,255,.46); font-size: 12px; }
+.auth-row label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.auth-row input { accent-color: #F0D39A; }
+.auth-link { color: rgba(240,211,154,.82); cursor: pointer; }
+.auth-submit { width: 100%; padding: 13px 16px; border: 0; border-radius: 9px; background: linear-gradient(110deg,#9B6B35 0%,#D6B477 52%,#F0D39A 100%); color: #17130D; font: 600 14px "Jost","PingFang SC","Microsoft YaHei",sans-serif; cursor: pointer; box-shadow: 0 10px 26px rgba(214,180,119,.18); transition: transform .2s, box-shadow .2s; }
+.auth-submit:hover { transform: translateY(-1px); box-shadow: 0 14px 30px rgba(214,180,119,.28); }
+.auth-submit:disabled { opacity: .65; cursor: wait; transform: none; }
+.auth-status { min-height: 18px; margin: 12px 0 0; color: #F87171; font-size: 12px; line-height: 1.5; }
+.auth-register { margin-top: 18px; color: rgba(229,238,255,.46); font-size: 12px; text-align: center; }
+.auth-particles { z-index: 0; opacity: .72; }
+@media (max-width: 980px) and (min-width: 781px) { .auth-shell { gap: 32px; padding: 24px 30px; } .auth-card { padding: 30px; } }
+@media (max-width: 780px) { .auth-modal-bg { display: block; overflow-y: auto; } .auth-shell { display: flex; flex-direction: column; gap: 30px; padding: 40px 20px 60px; } .auth-brand { min-height: auto; width: 100%; text-align: center; } .auth-copy { margin-top: 58px; } .auth-copy p { max-width: 420px; margin-left: auto; margin-right: auto; } .auth-trust { justify-content: center; margin-top: 52px; } .auth-card { width: min(430px,92vw); } }
+
 .auth-toast {
   position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%);
   background: rgba(20,22,26,0.96); border: 1px solid rgba(255,255,255,0.1); color: #e5e7eb;
@@ -4152,26 +4295,40 @@ body {
 <!-- 王者荣耀风格登录遮罩（默认显示，未登录时覆盖整个主界面） -->
 <!-- [login-ai] AI 智能登录 + 数据预览遮罩 -->
 <div class="auth-modal-bg" id="authModalBg">
-  <div class="auth-glow"></div>
-  <div class="auth-brand-zone">
-    <div class="auth-logo">ABKS</div>
-    <div class="auth-sub1">达人管理工作台</div>
-    <div class="auth-headline">让达人运营更高效</div>
+  <div class="auth-shell">
+    <section class="auth-brand">
+      <div>
+        <div class="auth-logo">ABKS</div>
+        <div class="auth-subtitle">达人管理工作台</div>
+      </div>
+      <div class="auth-copy">
+        <h1>把优质关系，变成长期价值</h1>
+        <p>连接好达人，做好合作，让每一次运营都更有回报。</p>
+      </div>
+      <div class="auth-trust"><span>企业级加密</span><span>团队协作</span><span>数据实时同步</span></div>
+    </section>
+    <section>
+      <form class="auth-card" id="authForm" onsubmit="event.preventDefault();authSubmit();">
+        <h2>欢迎回来</h2>
+        <p class="auth-intro">登录工作台，继续管理你的达人合作。</p>
+        <div class="auth-field">
+          <label for="authEmail">邮箱</label>
+          <input id="authEmail" type="email" placeholder="输入邮箱地址" autocomplete="email" required>
+        </div>
+        <div class="auth-field">
+          <label for="authPassword">密码</label>
+          <input id="authPassword" type="password" placeholder="输入密码" autocomplete="current-password" required>
+        </div>
+        <div class="auth-row">
+          <label><input type="checkbox" id="authRemember"> 记住我</label>
+          <span class="auth-link" onclick="showToast('如需重置密码，请联系管理员')">忘记密码？</span>
+        </div>
+        <button class="auth-submit" type="submit" id="authSubmitBtn">登录工作台</button>
+        <p class="auth-status" id="authErr"></p>
+        <div class="auth-register" id="authSwitch" onclick="authToggleMode()">还没有账号？<span class="auth-link">立即注册</span></div>
+      </form>
+    </section>
   </div>
-  <div class="auth-card">
-    <div class="field">
-      <label>邮箱</label>
-      <input type="email" id="authEmail" placeholder="you@example.com" autocomplete="email">
-    </div>
-    <div class="field">
-      <label>密码</label>
-      <input type="password" id="authPassword" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')authSubmit()">
-    </div>
-    <div class="err" id="authErr"></div>
-    <button class="login-btn" onclick="authSubmit()" id="authSubmitBtn">登录</button>
-    <div class="switch" id="authSwitch" onclick="authToggleMode()">还没有账号？<b>立即注册</b></div>
-  </div>
-  <div class="auth-trust">企业级加密 · 数据实时同步 · AI 驱动</div>
 </div>
 <div class="auth-toast" id="authToast"></div>
 
@@ -4401,18 +4558,25 @@ function initSupabase() {
         } catch (e) { console.warn('[onAuthStateChange]', e); }
       });
     } catch (e) { console.warn('[onAuthStateChange register]', e); }
-    // 读取已有 session
+    // 读取已有 session：只恢复云端状态，不自动解锁后台
+    // 需求：每次访问网页必须先停留在登录页，必须手动点击「登录工作台」才能进入后台。
     sbClient.auth.getSession().then(({ data }) => {
       sbSession = data.session;
       sbUser = data.session?.user || null;
+      const app = document.querySelector('.app');
+      const bg = document.getElementById('authModalBg');
+      if (app) app.classList.add('auth-locked');
+      if (bg) { bg.style.display = ''; bg.classList.remove('hide'); }
+      showAuthModal();
       if (sbUser) {
         cloudStatus = 'online';
-        bootstrapFromCloud();
-        // 已有登录会话：直接淡出遮罩，无需手动登录
-        hideAuthModal();
+        // 保留会话用于登录成功后的云端同步，但不调用 bootstrapFromCloud，避免访问时提前拉取后台数据。
       }
       updateCloudUI();
-    }).catch(e => console.warn('[getSession]', e));
+    }).catch(e => {
+      console.warn('[getSession]', e);
+      showAuthModal();
+    });
   } catch (e) {
     console.error('[云端] 初始化失败', e);
     cloudStatus = 'error';
@@ -4521,19 +4685,54 @@ function updateCloudUI() {
 }
 
 let _authMode = 'signin';
+const AUTH_REMEMBER_EMAIL_KEY = 'abks_auth_remember_email_v1';
+// 清理上一版曾保存过的密码键，但不读取其内容；密码完全交给浏览器原生密码管理器。
+const LEGACY_AUTH_REMEMBER_KEY = 'abks_auth_remember_v1';
+try { localStorage.removeItem(LEGACY_AUTH_REMEMBER_KEY); } catch (e) {}
+function readRememberedEmail() {
+  try {
+    const email = localStorage.getItem(AUTH_REMEMBER_EMAIL_KEY);
+    return typeof email === 'string' ? email : '';
+  } catch (e) { console.warn('[remember-email] 读取失败', e); return ''; }
+}
+function clearRememberedEmail() {
+  try { localStorage.removeItem(AUTH_REMEMBER_EMAIL_KEY); } catch (e) {}
+}
 function showAuthModal() {
   console.log('[showAuthModal] called');
   try {
     _authMode = 'signin';
     const bg = document.getElementById('authModalBg');
     if (!bg) { console.error('[showAuthModal] authModalBg 不存在！'); return; }
-    const b = document.getElementById('authSubmitBtn'); if (b) b.textContent = '登录';
-    const w = document.getElementById('authSwitch');  if (w) w.textContent = '还没有账号？立即注册';
-    const em = document.getElementById('authEmail'); if (em) em.value = '';
-    const pw = document.getElementById('authPassword'); if (pw) pw.value = '';
+    const b = document.getElementById('authSubmitBtn'); if (b) b.textContent = '登录工作台';
+    const w = document.getElementById('authSwitch');  if (w) w.innerHTML = '还没有账号？<span class="auth-link">立即注册</span>';
+    const em = document.getElementById('authEmail');
+    const pw = document.getElementById('authPassword');
+    const remember = document.getElementById('authRemember');
+    if (remember && !remember.dataset.bound) {
+      remember.dataset.bound = '1';
+      remember.addEventListener('change', () => {
+        if (!remember.checked) {
+          clearRememberedEmail();
+          if (em) em.value = '';
+          if (pw) pw.value = '';
+        }
+      });
+    }
+    const savedEmail = readRememberedEmail();
+    if (savedEmail) {
+      if (em) em.value = savedEmail;
+      // 密码永不由网页代码读取、回填或保存；由浏览器原生密码管理器处理。
+      if (pw) pw.value = '';
+      if (remember) remember.checked = true;
+    } else {
+      if (em) em.value = '';
+      if (pw) pw.value = '';
+      if (remember) remember.checked = false;
+    }
     const er = document.getElementById('authErr'); if (er) er.textContent = '';
     bg.classList.remove('hide');
-    bg.style.display = 'flex';
+    bg.style.display = '';
     setTimeout(() => {
       const e = document.getElementById('authEmail');
       if (e) e.focus();
@@ -4602,6 +4801,15 @@ async function authSubmit() {
     if (result.error) {
       err.textContent = result.error.message || '操作失败';
       return;
+    }
+    if (_authMode === 'signin') {
+      const remember = document.getElementById('authRemember');
+      if (remember && remember.checked) {
+        try { localStorage.setItem(AUTH_REMEMBER_EMAIL_KEY, email); }
+        catch (e) { console.warn('[remember-email] 保存失败', e); }
+      } else {
+        clearRememberedEmail();
+      }
     }
     hideAuthModal();
   } catch (e) {
@@ -12580,6 +12788,48 @@ document.addEventListener('keydown', e => {
     document.getElementById('searchBox').focus();
   }
 });
+
+// 午夜香槟登录背景：轻量粒子与连线（仅视觉层，不读取或展示业务数据）
+(function initAuthParticles() {
+  const canvas = document.getElementById('authParticles');
+  if (!canvas || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const ctx = canvas.getContext('2d');
+  let particles = [], raf = 0, dpr = 1;
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = innerWidth * dpr; canvas.height = innerHeight * dpr;
+    canvas.style.width = innerWidth + 'px'; canvas.style.height = innerHeight + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const count = innerWidth < 600 ? 70 : 120;
+    particles = Array.from({length: count}, () => ({
+      x: Math.random() * innerWidth, y: Math.random() * innerHeight,
+      vx: (Math.random() - .5) * .16, vy: (Math.random() - .5) * .16,
+      r: Math.random() * 1.15 + .35, blue: Math.random() > .48
+    }));
+  }
+  function draw() {
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < -10 || p.x > innerWidth + 10) p.vx *= -1;
+      if (p.y < -10 || p.y > innerHeight + 10) p.vy *= -1;
+      ctx.fillStyle = p.blue ? 'rgba(96,165,250,.34)' : 'rgba(139,92,246,.28)';
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+    });
+    for (let i = 0; i < particles.length; i++) for (let j = i + 1; j < particles.length; j++) {
+      const a = particles[i], b = particles[j], dx = a.x - b.x, dy = a.y - b.y;
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d < 125) {
+        ctx.strokeStyle = `rgba(96,165,250,${(1 - d / 125) * .085})`;
+        ctx.lineWidth = .6; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      }
+    }
+    raf = requestAnimationFrame(draw);
+  }
+  resize(); draw();
+  window.addEventListener('resize', resize, {passive:true});
+  window.addEventListener('beforeunload', () => cancelAnimationFrame(raf), {once:true});
+})();
 
 // 启动
 renderAll();
